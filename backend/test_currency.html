@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Countries & Currency API Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            width: 100%;
+            transition: transform 0.2s;
+            margin-top: 10px;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .output {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-top: 20px;
+        }
+        .output h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        #response {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 6px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .success {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            color: #721c24;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: 600;
+            color: #333;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .info {
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            color: #0d47a1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌍 Countries & Currency API Test</h1>
+        
+        <div class="grid">
+            <!-- Test Countries API -->
+            <div class="card">
+                <h2>1. Get All Countries</h2>
+                <div class="info">
+                    GET /api/countries<br>
+                    Fetches all countries with their currencies
+                </div>
+                <button onclick="testCountries()">Fetch Countries</button>
+            </div>
+
+            <!-- Test Currencies API -->
+            <div class="card">
+                <h2>2. Get All Currencies</h2>
+                <div class="info">
+                    GET /api/currencies<br>
+                    Fetches unique list of all currencies
+                </div>
+                <button onclick="testCurrencies()">Fetch Currencies</button>
+            </div>
+
+            <!-- Test Exchange Rates -->
+            <div class="card">
+                <h2>3. Get Exchange Rates</h2>
+                <div class="info">
+                    GET /api/exchange-rates/{currency}<br>
+                    Get current exchange rates
+                </div>
+                <label>Base Currency:</label>
+                <select id="baseCurrency">
+                    <option value="USD">USD - US Dollar</option>
+                    <option value="EUR">EUR - Euro</option>
+                    <option value="GBP">GBP - British Pound</option>
+                    <option value="INR">INR - Indian Rupee</option>
+                    <option value="JPY">JPY - Japanese Yen</option>
+                </select>
+                <button onclick="testExchangeRates()">Get Rates</button>
+            </div>
+
+            <!-- Test Currency Conversion -->
+            <div class="card">
+                <h2>4. Convert Currency</h2>
+                <div class="info">
+                    POST /api/convert<br>
+                    Convert amount between currencies
+                </div>
+                <label>Amount:</label>
+                <input type="number" id="amount" value="100" step="0.01">
+                
+                <label>From Currency:</label>
+                <select id="fromCurrency">
+                    <option value="USD">USD - US Dollar</option>
+                    <option value="EUR">EUR - Euro</option>
+                    <option value="GBP">GBP - British Pound</option>
+                    <option value="INR">INR - Indian Rupee</option>
+                </select>
+                
+                <label>To Currency:</label>
+                <select id="toCurrency">
+                    <option value="EUR">EUR - Euro</option>
+                    <option value="USD">USD - US Dollar</option>
+                    <option value="GBP">GBP - British Pound</option>
+                    <option value="INR">INR - Indian Rupee</option>
+                </select>
+                <button onclick="testConvert()">Convert</button>
+            </div>
+        </div>
+
+        <div class="output">
+            <h2>📤 API Response</h2>
+            <div id="response">Click a button to test an API endpoint...</div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+
+        function displayResponse(data, status = 'info') {
+            const responseDiv = document.getElementById('response');
+            responseDiv.textContent = JSON.stringify(data, null, 2);
+            responseDiv.className = status;
+        }
+
+        async function makeRequest(url, method = 'GET', body = null) {
+            try {
+                const options = {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                };
+
+                if (body) {
+                    options.body = JSON.stringify(body);
+                }
+
+                const response = await fetch(url, options);
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayResponse({ status: response.status, ...data }, 'success');
+                } else {
+                    displayResponse({ status: response.status, ...data }, 'error');
+                }
+
+                return data;
+            } catch (error) {
+                displayResponse({ error: error.message }, 'error');
+                return null;
+            }
+        }
+
+        async function testCountries() {
+            await makeRequest(`${API_BASE}/countries`);
+        }
+
+        async function testCurrencies() {
+            await makeRequest(`${API_BASE}/currencies`);
+        }
+
+        async function testExchangeRates() {
+            const baseCurrency = document.getElementById('baseCurrency').value;
+            await makeRequest(`${API_BASE}/exchange-rates/${baseCurrency}`);
+        }
+
+        async function testConvert() {
+            const amount = parseFloat(document.getElementById('amount').value);
+            const fromCurrency = document.getElementById('fromCurrency').value;
+            const toCurrency = document.getElementById('toCurrency').value;
+
+            await makeRequest(`${API_BASE}/convert`, 'POST', {
+                amount: amount,
+                from: fromCurrency,
+                to: toCurrency
+            });
+        }
+    </script>
+</body>
+</html>

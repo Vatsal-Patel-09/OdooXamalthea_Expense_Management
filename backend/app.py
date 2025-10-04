@@ -19,6 +19,8 @@ from config.database import test_connection
 
 # Import route blueprints
 from routes.auth import auth_bp
+from routes.users import users_bp
+from routes.countries import countries_bp
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -35,6 +37,8 @@ CORS(app, resources={
 
 # Register blueprints
 app.register_blueprint(auth_bp, url_prefix='/api/auth')
+app.register_blueprint(users_bp, url_prefix='/api/users')
+app.register_blueprint(countries_bp, url_prefix='/api')
 
 # Basic health check route
 @app.route('/')

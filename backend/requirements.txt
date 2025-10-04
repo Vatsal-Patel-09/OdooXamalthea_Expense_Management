@@ -14,6 +14,9 @@ PyJWT
 # Date and time utilities
 python-dateutil
 
+# HTTP requests for external APIs
+requests
+
 # Validation
 python-multipart
 

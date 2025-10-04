@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -9,11 +9,21 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import { api } from '@/lib/api';
+
+interface Country {
+  name: string;
+  currencies: string[];
+  currency_names: string[];
+  primary_currency: string;
+}
 
 export default function SignupPage() {
   const router = useRouter();
   const { signup } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [countries, setCountries] = useState<Country[]>([]);
+  const [loadingCountries, setLoadingCountries] = useState(true);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -21,6 +31,35 @@ export default function SignupPage() {
     company_name: '',
     currency: 'USD',
   });
+
+  // Fetch countries on mount
+  useEffect(() => {
+    const fetchCountries = async () => {
+      try {
+        const response = await api.countries.list();
+        setCountries(response.data.data || []);
+      } catch (error) {
+        console.error('Failed to fetch countries:', error);
+        toast.error('Failed to load countries');
+      } finally {
+        setLoadingCountries(false);
+      }
+    };
+
+    fetchCountries();
+  }, []);
+
+  const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const countryName = e.target.value;
+    const country = countries.find(c => c.name === countryName);
+    
+    if (country) {
+      setFormData({ 
+        ...formData, 
+        currency: country.primary_currency 
+      });
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,23 +138,40 @@ export default function SignupPage() {
               <p className="text-xs text-gray-500">Must be at least 8 characters</p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="currency">Currency</Label>
+              <Label htmlFor="country">Country</Label>
               <select
-                id="currency"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={formData.currency}
-                onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-                disabled={loading}
+                id="country"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800"
+                onChange={handleCountryChange}
+                disabled={loading || loadingCountries}
               >
-                <option value="USD">USD - US Dollar</option>
-                <option value="EUR">EUR - Euro</option>
-                <option value="GBP">GBP - British Pound</option>
-                <option value="INR">INR - Indian Rupee</option>
+                <option value="">Select your country</option>
+                {countries.map((country) => (
+                  <option key={country.name} value={country.name}>
+                    {country.name} ({country.primary_currency})
+                  </option>
+                ))}
               </select>
+              <p className="text-xs text-gray-500">
+                Company base currency will be set based on country
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="currency">Company Currency</Label>
+              <Input
+                id="currency"
+                type="text"
+                value={formData.currency}
+                disabled
+                className="bg-gray-100 dark:bg-gray-800"
+              />
+              <p className="text-xs text-gray-500">
+                Selected automatically based on country
+              </p>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full" disabled={loading || loadingCountries}>
               {loading ? 'Creating account...' : 'Create account'}
             </Button>
             <p className="text-sm text-center text-gray-600 dark:text-gray-400">

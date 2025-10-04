@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management API Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 600;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            width: 100%;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .output {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-top: 20px;
+        }
+        .output h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        #response {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 6px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .token-display {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+            word-break: break-all;
+        }
+        .token-display strong {
+            color: #856404;
+        }
+        .info-text {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #0d47a1;
+        }
+        .success {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧑‍💼 User Management API Test Suite</h1>
+        
+        <div class="token-display" id="tokenDisplay">
+            <strong>Auth Token:</strong> Not set (Please login first)
+        </div>
+
+        <div class="grid">
+            <!-- Login First -->
+            <div class="card">
+                <h2>🔐 Step 1: Login</h2>
+                <div class="info-text">Login first to get auth token for other API calls</div>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label>Email:</label>
+                        <input type="email" id="loginEmail" value="admin@company.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Password:</label>
+                        <input type="password" id="loginPassword" value="Admin@123" required>
+                    </div>
+                    <button type="submit">Login & Get Token</button>
+                </form>
+            </div>
+
+            <!-- List Users -->
+            <div class="card">
+                <h2>👥 List All Users</h2>
+                <div class="info-text">Get all users in your company</div>
+                <form id="listUsersForm">
+                    <div class="form-group">
+                        <label>Filter by Role (optional):</label>
+                        <select id="filterRole">
+                            <option value="">All Roles</option>
+                            <option value="admin">Admin</option>
+                            <option value="manager">Manager</option>
+                            <option value="employee">Employee</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Filter by Status:</label>
+                        <select id="filterActive">
+                            <option value="true">Active Only</option>
+                            <option value="false">Inactive Only</option>
+                            <option value="">All</option>
+                        </select>
+                    </div>
+                    <button type="submit">List Users</button>
+                </form>
+            </div>
+
+            <!-- Get User by ID -->
+            <div class="card">
+                <h2>🔍 Get User Details</h2>
+                <div class="info-text">Get specific user by ID (with manager info)</div>
+                <form id="getUserForm">
+                    <div class="form-group">
+                        <label>User ID:</label>
+                        <input type="text" id="getUserId" placeholder="Enter user UUID" required>
+                    </div>
+                    <button type="submit">Get User</button>
+                </form>
+            </div>
+
+            <!-- Create New User -->
+            <div class="card">
+                <h2>➕ Create New User</h2>
+                <div class="info-text">Create employee or manager (Admin only)</div>
+                <form id="createUserForm">
+                    <div class="form-group">
+                        <label>Full Name:</label>
+                        <input type="text" id="createName" placeholder="John Doe" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email:</label>
+                        <input type="email" id="createEmail" placeholder="john@company.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Password:</label>
+                        <input type="password" id="createPassword" placeholder="Min 8 chars" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Role:</label>
+                        <select id="createRole" required>
+                            <option value="employee">Employee</option>
+                            <option value="manager">Manager</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Manager ID (optional):</label>
+                        <input type="text" id="createManagerId" placeholder="Enter manager UUID">
+                    </div>
+                    <button type="submit">Create User</button>
+                </form>
+            </div>
+
+            <!-- Update User -->
+            <div class="card">
+                <h2>✏️ Update User</h2>
+                <div class="info-text">Update user details (Admin only)</div>
+                <form id="updateUserForm">
+                    <div class="form-group">
+                        <label>User ID:</label>
+                        <input type="text" id="updateUserId" placeholder="Enter user UUID" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Full Name (optional):</label>
+                        <input type="text" id="updateName" placeholder="New name">
+                    </div>
+                    <div class="form-group">
+                        <label>Email (optional):</label>
+                        <input type="email" id="updateEmail" placeholder="new@company.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Role (optional):</label>
+                        <select id="updateRole">
+                            <option value="">Keep current</option>
+                            <option value="employee">Employee</option>
+                            <option value="manager">Manager</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Manager ID (optional):</label>
+                        <input type="text" id="updateManagerId" placeholder="New manager UUID">
+                    </div>
+                    <button type="submit">Update User</button>
+                </form>
+            </div>
+
+            <!-- Delete User -->
+            <div class="card">
+                <h2>🗑️ Delete User</h2>
+                <div class="info-text">Soft delete (deactivate) user (Admin only)</div>
+                <form id="deleteUserForm">
+                    <div class="form-group">
+                        <label>User ID:</label>
+                        <input type="text" id="deleteUserId" placeholder="Enter user UUID" required>
+                    </div>
+                    <button type="submit" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);">Delete User</button>
+                </form>
+            </div>
+
+            <!-- Reset Password -->
+            <div class="card">
+                <h2>🔑 Reset User Password</h2>
+                <div class="info-text">Reset password for any user (Admin only)</div>
+                <form id="resetPasswordForm">
+                    <div class="form-group">
+                        <label>User ID:</label>
+                        <input type="text" id="resetUserId" placeholder="Enter user UUID" required>
+                    </div>
+                    <div class="form-group">
+                        <label>New Password:</label>
+                        <input type="password" id="resetPassword" placeholder="Min 8 chars" required>
+                    </div>
+                    <button type="submit">Reset Password</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="output">
+            <h2>📤 API Response</h2>
+            <div id="response">Waiting for API call...</div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+        let authToken = null;
+
+        function updateTokenDisplay() {
+            const display = document.getElementById('tokenDisplay');
+            if (authToken) {
+                display.innerHTML = `<strong>Auth Token:</strong> ${authToken.substring(0, 50)}...`;
+                display.classList.add('success');
+            } else {
+                display.innerHTML = '<strong>Auth Token:</strong> Not set (Please login first)';
+                display.classList.remove('success');
+            }
+        }
+
+        function displayResponse(data, status = 'info') {
+            const responseDiv = document.getElementById('response');
+            responseDiv.textContent = JSON.stringify(data, null, 2);
+            responseDiv.className = status;
+        }
+
+        async function makeRequest(url, method = 'GET', body = null, requiresAuth = true) {
+            try {
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+
+                if (requiresAuth && authToken) {
+                    headers['Authorization'] = `Bearer ${authToken}`;
+                }
+
+                const options = {
+                    method,
+                    headers
+                };
+
+                if (body) {
+                    options.body = JSON.stringify(body);
+                }
+
+                const response = await fetch(url, options);
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayResponse({ status: response.status, ...data }, 'success');
+                } else {
+                    displayResponse({ status: response.status, ...data }, 'error');
+                }
+
+                return data;
+            } catch (error) {
+                displayResponse({ error: error.message }, 'error');
+                return null;
+            }
+        }
+
+        // Login Form
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            const data = await makeRequest(`${API_BASE}/auth/login`, 'POST', {
+                email,
+                password
+            }, false);
+
+            if (data && data.success && data.token) {
+                authToken = data.token;
+                updateTokenDisplay();
+            }
+        });
+
+        // List Users Form
+        document.getElementById('listUsersForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const role = document.getElementById('filterRole').value;
+            const isActive = document.getElementById('filterActive').value;
+
+            let url = `${API_BASE}/users`;
+            const params = new URLSearchParams();
+            if (role) params.append('role', role);
+            if (isActive) params.append('is_active', isActive);
+            
+            if (params.toString()) {
+                url += `?${params.toString()}`;
+            }
+
+            await makeRequest(url, 'GET');
+        });
+
+        // Get User Form
+        document.getElementById('getUserForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const userId = document.getElementById('getUserId').value;
+            await makeRequest(`${API_BASE}/users/${userId}`, 'GET');
+        });
+
+        // Create User Form
+        document.getElementById('createUserForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const body = {
+                name: document.getElementById('createName').value,
+                email: document.getElementById('createEmail').value,
+                password: document.getElementById('createPassword').value,
+                role: document.getElementById('createRole').value
+            };
+
+            const managerId = document.getElementById('createManagerId').value;
+            if (managerId) {
+                body.manager_id = managerId;
+            }
+
+            await makeRequest(`${API_BASE}/users`, 'POST', body);
+        });
+
+        // Update User Form
+        document.getElementById('updateUserForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const userId = document.getElementById('updateUserId').value;
+            const body = {};
+
+            const name = document.getElementById('updateName').value;
+            const email = document.getElementById('updateEmail').value;
+            const role = document.getElementById('updateRole').value;
+            const managerId = document.getElementById('updateManagerId').value;
+
+            if (name) body.name = name;
+            if (email) body.email = email;
+            if (role) body.role = role;
+            if (managerId) body.manager_id = managerId;
+
+            await makeRequest(`${API_BASE}/users/${userId}`, 'PUT', body);
+        });
+
+        // Delete User Form
+        document.getElementById('deleteUserForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const userId = document.getElementById('deleteUserId').value;
+            if (confirm('Are you sure you want to delete this user?')) {
+                await makeRequest(`${API_BASE}/users/${userId}`, 'DELETE');
+            }
+        });
+
+        // Reset Password Form
+        document.getElementById('resetPasswordForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const userId = document.getElementById('resetUserId').value;
+            const password = document.getElementById('resetPassword').value;
+
+            await makeRequest(`${API_BASE}/users/${userId}/password`, 'PUT', {
+                new_password: password
+            });
+        });
+
+        // Initialize
+        updateTokenDisplay();
+    </script>
+</body>
+</html>

@@ -68,6 +68,7 @@ CREATE TABLE expenses (
     expense_date DATE NOT NULL,
     description TEXT,
     receipt_url TEXT,
+    paid_by VARCHAR(20) DEFAULT 'personal' CHECK (paid_by IN ('personal', 'company')),
     status VARCHAR(50) DEFAULT 'draft' CHECK (status IN ('draft', 'submitted', 'approved', 'rejected')),
     submitted_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
