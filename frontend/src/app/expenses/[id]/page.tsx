@@ -4,6 +4,25 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { Navbar } from '@/components/navbar';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from 'sonner';
+import {
+  ArrowLeft,
+  Calendar,
+  DollarSign,
+  FileText,
+  User,
+  Tag,
+  ExternalLink,
+  Edit,
+  Send,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  Image as ImageIcon
+} from 'lucide-react';
 
 export default function ViewExpensePage() {
   const router = useRouter();
@@ -34,237 +53,328 @@ export default function ViewExpensePage() {
       }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to load expense');
+      toast.error('Failed to load expense');
     } finally {
       setLoading(false);
     }
   };
 
+  const handleSubmit = async () => {
+    if (!confirm('Submit this expense for approval?')) return;
+    
+    try {
+      const response = await api.expenses.submit(expense.id);
+      if (response.data.success) {
+        toast.success('Expense submitted for approval');
+        loadExpense();
+      } else {
+        toast.error(response.data.message || 'Failed to submit expense');
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to submit expense');
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'approved':
+        return <CheckCircle2 className="h-6 w-6 text-green-600" />;
+      case 'rejected':
+        return <XCircle className="h-6 w-6 text-red-600" />;
+      case 'submitted':
+        return <Clock className="h-6 w-6 text-yellow-600" />;
+      default:
+        return <FileText className="h-6 w-6 text-gray-600" />;
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     const badges: any = {
-      draft: 'bg-gray-200 text-gray-800',
-      submitted: 'bg-yellow-200 text-yellow-800',
-      approved: 'bg-green-200 text-green-800',
-      rejected: 'bg-red-200 text-red-800',
+      draft: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400',
+      submitted: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
+      approved: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+      rejected: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
     };
     
     return (
-      <span className={`px-3 py-1 rounded-full text-sm font-semibold ${badges[status] || 'bg-gray-200 text-gray-800'}`}>
-        {status.charAt(0).toUpperCase() + status.slice(1)}
-      </span>
+      <div className="flex items-center space-x-2">
+        {getStatusIcon(status)}
+        <span className={`px-4 py-2 rounded-full text-sm font-semibold ${badges[status] || 'bg-gray-100 text-gray-700'}`}>
+          {status.charAt(0).toUpperCase() + status.slice(1)}
+        </span>
+      </div>
     );
   };
 
   if (!user || loading) {
-    return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="flex justify-center items-center min-h-[60vh]">
+          <div className="flex flex-col items-center space-y-4">
+            <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+            <p className="text-muted-foreground">Loading...</p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (error) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-3xl">
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-          {error}
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8 max-w-3xl">
+          <Card className="border-destructive">
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <XCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+                <h3 className="text-lg font-medium mb-2">Error Loading Expense</h3>
+                <p className="text-muted-foreground mb-4">{error}</p>
+                <Button onClick={() => router.push('/expenses')} variant="outline">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Expenses
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
-        <button
-          onClick={() => router.push('/expenses')}
-          className="mt-4 text-blue-600 hover:text-blue-800"
-        >
-          ← Back to Expenses
-        </button>
       </div>
     );
   }
 
   if (!expense) {
-    return <div className="flex justify-center items-center min-h-screen">Expense not found</div>;
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8 max-w-3xl">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">Expense not found</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-3xl">
-      {/* Navigation Bar */}
-      <div className="mb-6 flex items-center justify-between bg-white p-4 rounded-lg shadow">
-        <div className="flex space-x-4">
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="text-blue-600 hover:text-blue-800 font-medium"
-          >
-            ← Dashboard
-          </button>
-          <span className="text-gray-400">|</span>
-          <button
-            onClick={() => router.push('/expenses')}
-            className="text-blue-600 hover:text-blue-800 font-medium"
-          >
-            My Expenses
-          </button>
-          <span className="text-gray-400">|</span>
-          <span className="text-gray-900 font-semibold">
-            Expense Details
-          </span>
-        </div>
-      </div>
+    <div className="min-h-screen bg-background">
+      <Navbar />
       
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">Expense Details</h1>
-        <button
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-4xl">
+        {/* Back Button */}
+        <Button
+          variant="ghost"
           onClick={() => router.push('/expenses')}
-          className="text-blue-600 hover:text-blue-800"
+          className="mb-6"
         >
-          ← Back to List
-        </button>
-      </div>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Expenses
+        </Button>
 
-      <div className="bg-white shadow-md rounded-lg overflow-hidden">
-        {/* Header with Status */}
-        <div className="bg-gray-50 px-6 py-4 border-b flex justify-between items-center">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900">
-              {expense.category?.name || 'Uncategorized'}
-            </h2>
-            <p className="text-sm text-gray-500">
-              Expense ID: {expense.id}
-            </p>
-          </div>
-          {getStatusBadge(expense.status)}
-        </div>
+        {/* Header Card */}
+        <Card className="mb-6 border-2">
+          <CardHeader>
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+              <div className="flex-1">
+                <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                  <Tag className="h-4 w-4" />
+                  <span className="text-sm">{expense.category?.name || 'Uncategorized'}</span>
+                </div>
+                <CardTitle className="text-3xl mb-2">
+                  {expense.description || 'Expense Details'}
+                </CardTitle>
+                <CardDescription className="text-base">
+                  ID: {expense.id}
+                </CardDescription>
+              </div>
+              {getStatusBadge(expense.status)}
+            </div>
+          </CardHeader>
+        </Card>
 
-        {/* Expense Details */}
-        <div className="px-6 py-6 space-y-6">
-          {/* Amount */}
-          <div>
-            <label className="block text-sm font-medium text-gray-500 mb-1">Amount</label>
-            <p className="text-3xl font-bold text-gray-900">
-              {expense.currency} {parseFloat(expense.amount).toFixed(2)}
-            </p>
-          </div>
+        {/* Amount Card */}
+        <Card className="mb-6 bg-gradient-to-br from-primary/5 to-primary/10 border-2">
+          <CardContent className="pt-6">
+            <div className="text-center">
+              <div className="flex items-center justify-center mb-2">
+                <DollarSign className="h-8 w-8 text-primary" />
+              </div>
+              <p className="text-sm text-muted-foreground mb-2">Total Amount</p>
+              <p className="text-5xl font-bold text-primary">
+                {expense.currency} {parseFloat(expense.amount).toFixed(2)}
+              </p>
+              <p className="text-sm text-muted-foreground mt-2 capitalize">
+                Paid by {expense.paid_by}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
 
-          {/* Details Grid */}
-          <div className="grid grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-500 mb-1">Expense Date</label>
-              <p className="text-lg text-gray-900">
+        {/* Details Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center space-x-2 text-muted-foreground">
+                <Calendar className="h-4 w-4" />
+                <CardDescription>Expense Date</CardDescription>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xl font-semibold">
                 {new Date(expense.expense_date).toLocaleDateString('en-US', {
                   year: 'numeric',
                   month: 'long',
                   day: 'numeric'
                 })}
               </p>
-            </div>
+            </CardContent>
+          </Card>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-500 mb-1">Paid By</label>
-              <p className="text-lg text-gray-900 capitalize">
-                <span className={expense.paid_by === 'company' ? 'text-blue-600 font-medium' : ''}>
-                  {expense.paid_by}
-                </span>
-              </p>
-            </div>
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center space-x-2 text-muted-foreground">
+                <DollarSign className="h-4 w-4" />
+                <CardDescription>Currency</CardDescription>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xl font-semibold">{expense.currency}</p>
+            </CardContent>
+          </Card>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-500 mb-1">Currency</label>
-              <p className="text-lg text-gray-900">{expense.currency}</p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-500 mb-1">Status</label>
-              <p className="text-lg text-gray-900 capitalize">{expense.status}</p>
-            </div>
-
-            {expense.submitted_at && (
-              <>
-                <div>
-                  <label className="block text-sm font-medium text-gray-500 mb-1">Submitted At</label>
-                  <p className="text-lg text-gray-900">
-                    {new Date(expense.submitted_at).toLocaleString()}
-                  </p>
+          {expense.submitted_at && (
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center space-x-2 text-muted-foreground">
+                  <Clock className="h-4 w-4" />
+                  <CardDescription>Submitted At</CardDescription>
                 </div>
-              </>
-            )}
+              </CardHeader>
+              <CardContent>
+                <p className="text-lg font-semibold">
+                  {new Date(expense.submitted_at).toLocaleString()}
+                </p>
+              </CardContent>
+            </Card>
+          )}
 
-            <div>
-              <label className="block text-sm font-medium text-gray-500 mb-1">Created At</label>
-              <p className="text-lg text-gray-900">
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center space-x-2 text-muted-foreground">
+                <Calendar className="h-4 w-4" />
+                <CardDescription>Created At</CardDescription>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <p className="text-lg font-semibold">
                 {new Date(expense.created_at).toLocaleString()}
               </p>
-            </div>
-          </div>
-
-          {/* Description */}
-          {expense.description && (
-            <div>
-              <label className="block text-sm font-medium text-gray-500 mb-1">Description</label>
-              <p className="text-gray-900 whitespace-pre-wrap">{expense.description}</p>
-            </div>
-          )}
-
-          {/* Receipt */}
-          {expense.receipt_url && (
-            <div>
-              <label className="block text-sm font-medium text-gray-500 mb-2">Receipt</label>
-              <a
-                href={expense.receipt_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-              >
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
-                View Receipt
-              </a>
-            </div>
-          )}
-
-          {/* Submitted By */}
-          {expense.user && (
-            <div className="pt-4 border-t">
-              <label className="block text-sm font-medium text-gray-500 mb-1">Submitted By</label>
-              <p className="text-gray-900">
-                {expense.user.name} ({expense.user.email})
-              </p>
-            </div>
-          )}
+            </CardContent>
+          </Card>
         </div>
+
+        {/* Description */}
+        {expense.description && (
+          <Card className="mb-6">
+            <CardHeader>
+              <div className="flex items-center space-x-2">
+                <FileText className="h-5 w-5 text-muted-foreground" />
+                <CardTitle className="text-lg">Description</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <p className="text-foreground whitespace-pre-wrap leading-relaxed">
+                {expense.description}
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Receipt */}
+        {expense.receipt_url && (
+          <Card className="mb-6">
+            <CardHeader>
+              <div className="flex items-center space-x-2">
+                <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                <CardTitle className="text-lg">Receipt</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <Button
+                onClick={() => window.open(expense.receipt_url, '_blank')}
+                size="lg"
+                variant="outline"
+                className="w-full sm:w-auto"
+              >
+                <ExternalLink className="h-4 w-4 mr-2" />
+                View Receipt
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Submitter Info */}
+        {expense.user && (
+          <Card className="mb-6">
+            <CardHeader>
+              <div className="flex items-center space-x-2">
+                <User className="h-5 w-5 text-muted-foreground" />
+                <CardTitle className="text-lg">Submitted By</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <p className="text-lg font-medium">{expense.user.name}</p>
+              <p className="text-muted-foreground">{expense.user.email}</p>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Actions */}
-        <div className="bg-gray-50 px-6 py-4 border-t flex gap-3">
-          {expense.status === 'draft' && (
-            <>
-              <button
-                onClick={() => router.push(`/expenses/${expense.id}/edit`)}
-                className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 font-medium"
-              >
-                Edit Expense
-              </button>
-              <button
-                onClick={async () => {
-                  if (confirm('Submit this expense for approval?')) {
-                    try {
-                      await api.expenses.submit(expense.id);
-                      alert('Expense submitted for approval');
-                      loadExpense(); // Reload to show updated status
-                    } catch (err: any) {
-                      alert(err.response?.data?.message || 'Failed to submit');
-                    }
-                  }
-                }}
-                className="flex-1 bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 font-medium"
-              >
-                Submit for Approval
-              </button>
-            </>
-          )}
-          
-          {expense.status !== 'draft' && (
-            <button
-              onClick={() => router.push('/expenses')}
-              className="flex-1 bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700 font-medium"
-            >
-              Back to List
-            </button>
-          )}
-        </div>
-      </div>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex flex-col sm:flex-row gap-3">
+              {expense.status === 'draft' && (
+                <>
+                  <Button
+                    onClick={() => router.push(`/expenses/${expense.id}/edit`)}
+                    size="lg"
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit Expense
+                  </Button>
+                  <Button
+                    onClick={handleSubmit}
+                    size="lg"
+                    className="flex-1"
+                  >
+                    <Send className="h-4 w-4 mr-2" />
+                    Submit for Approval
+                  </Button>
+                </>
+              )}
+              
+              {expense.status !== 'draft' && (
+                <Button
+                  onClick={() => router.push('/expenses')}
+                  size="lg"
+                  variant="outline"
+                  className="w-full"
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to List
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </main>
     </div>
   );
 }

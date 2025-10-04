@@ -4,6 +4,26 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { Navbar } from '@/components/navbar';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
+import {
+  FileText,
+  Filter,
+  Search,
+  Eye,
+  Edit,
+  Trash2,
+  Send,
+  Paperclip,
+  PlusCircle,
+  Calendar,
+  DollarSign,
+  Tag
+} from 'lucide-react';
 
 export default function ExpensesPage() {
   const router = useRouter();
@@ -13,6 +33,7 @@ export default function ExpensesPage() {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   
   const [filters, setFilters] = useState({
     status: '',
@@ -46,6 +67,7 @@ export default function ExpensesPage() {
       }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to load expenses');
+      toast.error('Failed to load expenses');
     } finally {
       setLoading(false);
     }
@@ -69,14 +91,14 @@ export default function ExpensesPage() {
       const response = await api.expenses.delete(id);
       
       if (response.data.success) {
-        alert('Expense deleted successfully');
+        toast.success('Expense deleted successfully');
         loadExpenses();
         loadStats();
       } else {
-        alert(response.data.message || 'Failed to delete expense');
+        toast.error(response.data.message || 'Failed to delete expense');
       }
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to delete expense');
+      toast.error(err.response?.data?.message || 'Failed to delete expense');
     }
   };
 
@@ -87,240 +109,327 @@ export default function ExpensesPage() {
       const response = await api.expenses.submit(id);
       
       if (response.data.success) {
-        alert('Expense submitted for approval');
+        toast.success('Expense submitted for approval');
         loadExpenses();
         loadStats();
       } else {
-        alert(response.data.message || 'Failed to submit expense');
+        toast.error(response.data.message || 'Failed to submit expense');
       }
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to submit expense');
+      toast.error(err.response?.data?.message || 'Failed to submit expense');
     }
   };
 
   const getStatusBadge = (status: string) => {
     const badges: any = {
-      draft: 'bg-gray-200 text-gray-800',
-      submitted: 'bg-yellow-200 text-yellow-800',
-      approved: 'bg-green-200 text-green-800',
-      rejected: 'bg-red-200 text-red-800',
+      draft: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400',
+      submitted: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
+      approved: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+      rejected: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
     };
     
     return (
-      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${badges[status] || 'bg-gray-200 text-gray-800'}`}>
+      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${badges[status] || 'bg-gray-100 text-gray-700'}`}>
         {status.charAt(0).toUpperCase() + status.slice(1)}
       </span>
     );
   };
 
+  const filteredExpenses = expenses.filter(expense =>
+    expense.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    expense.category?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   if (!user) {
-    return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Navigation Bar */}
-      <div className="mb-6 flex items-center justify-between bg-white p-4 rounded-lg shadow">
-        <div className="flex space-x-4">
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="text-blue-600 hover:text-blue-800 font-medium"
-          >
-            ← Dashboard
-          </button>
-          <span className="text-gray-400">|</span>
-          <button
-            onClick={() => router.push('/expenses')}
-            className="text-gray-900 font-semibold"
-          >
-            My Expenses
-          </button>
-          <span className="text-gray-400">|</span>
-          <button
-            onClick={() => router.push('/expenses/new')}
-            className="text-blue-600 hover:text-blue-800 font-medium"
-          >
-            + Create New
-          </button>
-        </div>
-      </div>
+    <div className="min-h-screen bg-background">
+      <Navbar />
       
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">My Expenses</h1>
-        <button
-          onClick={() => router.push('/expenses/new')}
-          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 font-medium"
-        >
-          + Create Expense
-        </button>
-      </div>
-
-      {/* Statistics Cards */}
-      {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white p-4 rounded-lg shadow">
-            <div className="text-gray-500 text-sm">Total Expenses</div>
-            <div className="text-2xl font-bold">{stats.total_expenses}</div>
-          </div>
-          <div className="bg-yellow-50 p-4 rounded-lg shadow">
-            <div className="text-gray-500 text-sm">Draft</div>
-            <div className="text-2xl font-bold text-yellow-600">{stats.draft_count}</div>
-          </div>
-          <div className="bg-blue-50 p-4 rounded-lg shadow">
-            <div className="text-gray-500 text-sm">Submitted</div>
-            <div className="text-2xl font-bold text-blue-600">{stats.submitted_count}</div>
-          </div>
-          <div className="bg-green-50 p-4 rounded-lg shadow">
-            <div className="text-gray-500 text-sm">Approved</div>
-            <div className="text-2xl font-bold text-green-600">{stats.approved_count}</div>
-          </div>
-        </div>
-      )}
-
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          {error}
-        </div>
-      )}
-
-      {/* Filters */}
-      <div className="bg-white p-4 rounded-lg shadow mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-7xl">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-            <select
-              value={filters.status}
-              onChange={(e) => {
-                setFilters({ ...filters, status: e.target.value });
-              }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All Statuses</option>
-              <option value="draft">Draft</option>
-              <option value="submitted">Submitted</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
-            </select>
+            <h1 className="text-3xl sm:text-4xl font-bold mb-2">My Expenses</h1>
+            <p className="text-muted-foreground text-lg">
+              Track and manage all your expenses
+            </p>
           </div>
-          
-          <div className="md:col-span-2 flex items-end">
-            <button
-              onClick={loadExpenses}
-              className="w-full md:w-auto bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700"
-            >
-              Apply Filters
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Expenses List */}
-      {loading ? (
-        <div className="text-center py-8">Loading expenses...</div>
-      ) : expenses.length === 0 ? (
-        <div className="bg-white rounded-lg shadow p-8 text-center">
-          <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No expenses found</h3>
-          <p className="text-gray-500 mb-4">Create your first expense to get started</p>
-          <button
+          <Button
             onClick={() => router.push('/expenses/new')}
-            className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700"
+            size="lg"
+            className="flex items-center space-x-2"
           >
-            Create Expense
-          </button>
+            <PlusCircle className="h-5 w-5" />
+            <span>Create Expense</span>
+          </Button>
         </div>
-      ) : (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paid By</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {expenses.map((expense) => (
-                <tr key={expense.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {new Date(expense.expense_date).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {expense.category?.name || 'N/A'}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">
-                    <div className="max-w-xs truncate">{expense.description || '-'}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {expense.currency} {parseFloat(expense.amount).toFixed(2)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <span className={`capitalize ${expense.paid_by === 'company' ? 'text-blue-600' : 'text-gray-600'}`}>
-                      {expense.paid_by}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    {getStatusBadge(expense.status)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex gap-2">
-                      {expense.receipt_url && (
-                        <a
-                          href={expense.receipt_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-900"
-                          title="View Receipt"
-                        >
-                          📎
-                        </a>
-                      )}
-                      
-                      {expense.status === 'draft' && (
-                        <>
-                          <button
-                            onClick={() => router.push(`/expenses/${expense.id}/edit`)}
-                            className="text-indigo-600 hover:text-indigo-900"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleSubmit(expense.id)}
-                            className="text-green-600 hover:text-green-900"
-                          >
-                            Submit
-                          </button>
-                          <button
-                            onClick={() => handleDelete(expense.id)}
-                            className="text-red-600 hover:text-red-900"
-                          >
-                            Delete
-                          </button>
-                        </>
-                      )}
-                      
-                      {expense.status !== 'draft' && (
-                        <button
-                          onClick={() => router.push(`/expenses/${expense.id}`)}
-                          className="text-blue-600 hover:text-blue-900"
-                        >
-                          View
-                        </button>
-                      )}
+
+        {/* Statistics Cards */}
+        {stats && (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader className="pb-3">
+                <CardDescription>Total</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{stats.total_expenses}</div>
+              </CardContent>
+            </Card>
+            <Card className="border-l-4 border-l-gray-500 hover:shadow-lg transition-shadow">
+              <CardHeader className="pb-3">
+                <CardDescription>Draft</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-gray-600">{stats.draft_count}</div>
+              </CardContent>
+            </Card>
+            <Card className="border-l-4 border-l-yellow-500 hover:shadow-lg transition-shadow">
+              <CardHeader className="pb-3">
+                <CardDescription>Submitted</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-yellow-600">{stats.submitted_count}</div>
+              </CardContent>
+            </Card>
+            <Card className="border-l-4 border-l-green-500 hover:shadow-lg transition-shadow">
+              <CardHeader className="pb-3">
+                <CardDescription>Approved</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-green-600">{stats.approved_count}</div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {error && (
+          <div className="bg-destructive/10 border border-destructive text-destructive px-4 py-3 rounded-lg mb-6">
+            {error}
+          </div>
+        )}
+
+        {/* Search and Filters */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Filter className="h-5 w-5" />
+              <span>Search & Filter</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="md:col-span-2">
+                <Label htmlFor="search">Search</Label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="search"
+                    type="text"
+                    placeholder="Search by description or category..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 h-11"
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <Label htmlFor="status">Status</Label>
+                <select
+                  id="status"
+                  value={filters.status}
+                  onChange={(e) => {
+                    setFilters({ ...filters, status: e.target.value });
+                    setTimeout(loadExpenses, 100);
+                  }}
+                  className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
+                  <option value="">All Statuses</option>
+                  <option value="draft">Draft</option>
+                  <option value="submitted">Submitted</option>
+                  <option value="approved">Approved</option>
+                  <option value="rejected">Rejected</option>
+                </select>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Expenses List */}
+        {loading ? (
+          <Card>
+            <CardContent className="py-12">
+              <div className="flex flex-col items-center space-y-4">
+                <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+                <p className="text-muted-foreground">Loading expenses...</p>
+              </div>
+            </CardContent>
+          </Card>
+        ) : filteredExpenses.length === 0 ? (
+          <Card>
+            <CardContent className="py-12">
+              <div className="text-center">
+                <div className="h-20 w-20 rounded-full bg-muted mx-auto mb-4 flex items-center justify-center">
+                  <FileText className="h-10 w-10 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-medium mb-2">No expenses found</h3>
+                <p className="text-muted-foreground mb-6">
+                  {searchTerm ? 'Try adjusting your search' : 'Create your first expense to get started'}
+                </p>
+                {!searchTerm && (
+                  <Button onClick={() => router.push('/expenses/new')} size="lg">
+                    <PlusCircle className="h-5 w-5 mr-2" />
+                    Create Expense
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-3">
+            {filteredExpenses.map((expense) => (
+              <Card
+                key={expense.id}
+                className="hover:shadow-lg transition-all border-2 hover:border-primary/50"
+                // onClick={() => router.push(`/expenses/${expense.id}`)}
+              >
+                <CardContent className="p-4 sm:p-6">
+                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    {/* Main Info */}
+                    <div className="flex items-start space-x-4 flex-1 min-w-0">
+                      <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <DollarSign className="h-6 w-6 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <h3 className="font-semibold text-lg truncate">
+                            {expense.description || 'No description'}
+                          </h3>
+                          <div className="flex-shrink-0 lg:hidden">
+                            {getStatusBadge(expense.status)}
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                          <div className="flex items-center">
+                            <Calendar className="h-4 w-4 mr-1" />
+                            {new Date(expense.expense_date).toLocaleDateString()}
+                          </div>
+                          {expense.category?.name && (
+                            <div className="flex items-center">
+                              <Tag className="h-4 w-4 mr-1" />
+                              {expense.category.name}
+                            </div>
+                          )}
+                          <div className="flex items-center">
+                            <span className={`capitalize ${expense.paid_by === 'company' ? 'text-primary font-medium' : ''}`}>
+                              {expense.paid_by}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+
+                    {/* Amount and Actions */}
+                    <div className="flex items-center justify-between lg:justify-end gap-4 lg:gap-6">
+                      <div className="text-right">
+                        <div className="text-2xl font-bold">
+                          {expense.currency} {parseFloat(expense.amount).toFixed(2)}
+                        </div>
+                      </div>
+                      
+                      <div className="hidden lg:block">
+                        {getStatusBadge(expense.status)}
+                      </div>
+                      
+                      {/* Action Buttons */}
+                      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                        {expense.receipt_url && (
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.open(expense.receipt_url, '_blank');
+                            }}
+                            title="View Receipt"
+                          >
+                            <Paperclip className="h-4 w-4" />
+                          </Button>
+                        )}
+                        
+                        {expense.status === 'draft' && (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                router.push(`/expenses/${expense.id}/edit`);
+                              }}
+                              title="Edit"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSubmit(expense.id);
+                              }}
+                              title="Submit"
+                              className="text-green-600 hover:text-green-700"
+                            >
+                              <Send className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(expense.id);
+                              }}
+                              title="Delete"
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
+                        
+                        {expense.status !== 'draft' && (
+                          <Button
+                            className='cursor-pointer'
+                            variant="outline"
+                            size="icon"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              router.push(`/expenses/${expense.id}`);
+                            }}
+                            title="View Details"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </main>
     </div>
   );
 }

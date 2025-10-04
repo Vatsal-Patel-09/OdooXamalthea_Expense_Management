@@ -4,6 +4,13 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { ThemeToggle } from '@/components/theme-toggle';
+import { toast } from 'sonner';
+import { ArrowLeft, Upload, X, FileText, DollarSign, Calendar, Tag } from 'lucide-react';
 
 export default function NewExpensePage() {
   const router = useRouter();
@@ -138,9 +145,9 @@ export default function NewExpensePage() {
         // If submit flag is true, submit for approval
         if (submit) {
           await api.expenses.submit(expenseId);
-          alert('Expense submitted for approval successfully!');
+          toast.success('Expense submitted for approval successfully!');
         } else {
-          alert('Expense saved as draft successfully!');
+          toast.success('Expense saved as draft successfully!');
         }
         
         router.push('/expenses');
@@ -149,6 +156,7 @@ export default function NewExpensePage() {
       }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to create expense');
+      toast.error(err.response?.data?.message || 'Failed to create expense');
     } finally {
       setLoading(false);
     }
@@ -162,247 +170,254 @@ export default function NewExpensePage() {
   };
 
   if (!user) {
-    return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-3xl">
-      {/* Navigation Bar */}
-      <div className="mb-6 flex items-center justify-between bg-white p-4 rounded-lg shadow">
-        <div className="flex space-x-4">
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="text-blue-600 hover:text-blue-800 font-medium"
-          >
-            ← Dashboard
-          </button>
-          <span className="text-gray-400">|</span>
-          <button
-            onClick={() => router.push('/expenses')}
-            className="text-blue-600 hover:text-blue-800 font-medium"
-          >
-            My Expenses
-          </button>
-          <span className="text-gray-400">|</span>
-          <span className="text-gray-900 font-semibold">
-            Create New
-          </span>
-        </div>
-      </div>
-      
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">Create New Expense</h1>
-        <button
-          onClick={() => router.push('/expenses')}
-          className="text-blue-600 hover:text-blue-800"
-        >
-          ← Back to Expenses
-        </button>
-      </div>
-
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          {error}
-        </div>
-      )}
-
-      <form onSubmit={(e) => handleSubmit(e, false)} className="bg-white shadow-md rounded-lg p-6">
-        {/* Category */}
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="category_id">
-            Category <span className="text-red-500">*</span>
-          </label>
-          <select
-            id="category_id"
-            name="category_id"
-            value={formData.category_id}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          >
-            <option value="">Select a category</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Amount and Currency */}
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div>
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="amount">
-              Amount <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="number"
-              id="amount"
-              name="amount"
-              value={formData.amount}
-              onChange={handleChange}
-              step="0.01"
-              min="0.01"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="0.00"
-              required
-            />
-          </div>
-          
-          <div>
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="currency">
-              Currency <span className="text-red-500">*</span>
-            </label>
-            <select
-              id="currency"
-              name="currency"
-              value={formData.currency}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            >
-              {currencies.map((currency) => (
-                <option key={currency.code} value={currency.code}>
-                  {currency.code} ({currency.symbol})
-                </option>
-              ))}
-            </select>
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Header */}
+      <header className="border-b bg-card sticky top-0 z-50">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center space-x-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => router.push('/expenses')}
+                className="flex items-center space-x-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                <span>Back</span>
+              </Button>
+              <div className="h-6 w-px bg-border" />
+              <h1 className="text-xl font-semibold">Create Expense</h1>
+            </div>
+            <ThemeToggle />
           </div>
         </div>
+      </header>
 
-        {/* Expense Date and Paid By */}
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div>
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="expense_date">
-              Expense Date <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="date"
-              id="expense_date"
-              name="expense_date"
-              value={formData.expense_date}
-              onChange={handleChange}
-              max={new Date().toISOString().split('T')[0]}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
-          
-          <div>
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="paid_by">
-              Paid By <span className="text-red-500">*</span>
-            </label>
-            <select
-              id="paid_by"
-              name="paid_by"
-              value={formData.paid_by}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            >
-              <option value="personal">Personal</option>
-              <option value="company">Company</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Description */}
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="description">
-            Description
-          </label>
-          <textarea
-            id="description"
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            rows={4}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Enter expense description..."
-          />
-        </div>
-
-        {/* Receipt Upload */}
-        <div className="mb-6">
-          <label className="block text-gray-700 text-sm font-bold mb-2">
-            Receipt (Optional)
-          </label>
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
-            {!receiptUrl ? (
-              <>
-                <input
-                  type="file"
-                  accept="image/*,.pdf"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                  id="fileUpload"
-                />
-                <label
-                  htmlFor="fileUpload"
-                  className="flex flex-col items-center justify-center cursor-pointer"
-                >
-                  <svg className="w-12 h-12 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                  </svg>
-                  <span className="text-sm text-gray-600">
-                    {selectedFile ? selectedFile.name : 'Click to upload or drag and drop'}
-                  </span>
-                  <span className="text-xs text-gray-500 mt-1">PNG, JPG, GIF, PDF (max 5MB)</span>
-                </label>
-                {selectedFile && (
-                  <button
-                    type="button"
-                    onClick={uploadReceipt}
-                    disabled={uploading}
-                    className="mt-3 w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:bg-gray-400"
-                  >
-                    {uploading ? 'Uploading...' : 'Upload Receipt'}
-                  </button>
-                )}
-              </>
-            ) : (
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <svg className="w-8 h-8 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span className="text-sm text-gray-700">Receipt uploaded successfully</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setReceiptUrl('');
-                    setSelectedFile(null);
-                  }}
-                  className="text-red-600 hover:text-red-800 text-sm"
-                >
-                  Remove
-                </button>
+      {/* Main Content */}
+      <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-6 max-w-5xl">
+        <Card className="h-full">
+          <CardContent className="p-6">
+            {error && (
+              <div className="bg-destructive/10 border border-destructive text-destructive px-4 py-3 rounded-lg mb-4">
+                {error}
               </div>
             )}
-          </div>
-        </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-3">
-          <button
-            type="submit"
-            disabled={loading}
-            className="flex-1 bg-gray-600 text-white py-3 px-4 rounded-md hover:bg-gray-700 disabled:bg-gray-400 font-medium"
-          >
-            {loading ? 'Saving...' : 'Save as Draft'}
-          </button>
-          
-          <button
-            type="button"
-            onClick={(e) => handleSubmit(e, true)}
-            disabled={loading}
-            className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 disabled:bg-gray-400 font-medium"
-          >
-            {loading ? 'Submitting...' : 'Submit for Approval'}
-          </button>
-        </div>
-      </form>
+            <form onSubmit={(e) => handleSubmit(e, false)} className="space-y-6">
+              {/* Row 1: Category, Amount, Currency */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="category_id" className="flex items-center space-x-1">
+                    <Tag className="h-4 w-4" />
+                    <span>Category</span>
+                    <span className="text-destructive">*</span>
+                  </Label>
+                  <select
+                    id="category_id"
+                    name="category_id"
+                    value={formData.category_id}
+                    onChange={handleChange}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>option]:bg-background [&>option]:text-foreground [&>option:disabled]:text-muted-foreground"
+                    required
+                  >
+                    <option value="" disabled className="bg-background text-muted-foreground">Select category</option>
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.id} className="bg-background text-foreground">
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="amount" className="flex items-center space-x-1">
+                    <DollarSign className="h-4 w-4" />
+                    <span>Amount</span>
+                    <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    type="number"
+                    id="amount"
+                    name="amount"
+                    value={formData.amount}
+                    onChange={handleChange}
+                    step="0.01"
+                    min="0.01"
+                    placeholder="0.00"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="currency">Currency <span className="text-destructive">*</span></Label>
+                  <select
+                    id="currency"
+                    name="currency"
+                    value={formData.currency}
+                    onChange={handleChange}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>option]:bg-background [&>option]:text-foreground"
+                    required
+                  >
+                    {currencies.map((currency) => (
+                      <option key={currency.code} value={currency.code} className="bg-background text-foreground">
+                        {currency.code} ({currency.symbol})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Row 2: Date and Paid By */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="expense_date" className="flex items-center space-x-1">
+                    <Calendar className="h-4 w-4" />
+                    <span>Expense Date</span>
+                    <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    type="date"
+                    id="expense_date"
+                    name="expense_date"
+                    value={formData.expense_date}
+                    onChange={handleChange}
+                    max={new Date().toISOString().split('T')[0]}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="paid_by">Paid By <span className="text-destructive">*</span></Label>
+                  <select
+                    id="paid_by"
+                    name="paid_by"
+                    value={formData.paid_by}
+                    onChange={handleChange}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>option]:bg-background [&>option]:text-foreground"
+                    required
+                  >
+                    <option value="personal" className="bg-background text-foreground">Personal</option>
+                    <option value="company" className="bg-background text-foreground">Company</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Row 3: Description */}
+              <div className="space-y-2">
+                <Label htmlFor="description" className="flex items-center space-x-1">
+                  <FileText className="h-4 w-4" />
+                  <span>Description</span>
+                </Label>
+                <textarea
+                  id="description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  rows={3}
+                  className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none"
+                  placeholder="Enter expense description..."
+                />
+              </div>
+
+              {/* Row 4: Receipt Upload */}
+              <div className="space-y-2">
+                <Label className="flex items-center space-x-1">
+                  <Upload className="h-4 w-4" />
+                  <span>Receipt (Optional)</span>
+                </Label>
+                <div className="border-2 border-dashed border-border rounded-lg p-4 bg-muted/20">
+                  {!receiptUrl ? (
+                    <>
+                      <input
+                        type="file"
+                        accept="image/*,.pdf"
+                        onChange={handleFileSelect}
+                        className="hidden"
+                        id="fileUpload"
+                      />
+                      <label
+                        htmlFor="fileUpload"
+                        className="flex flex-col items-center justify-center cursor-pointer py-2"
+                      >
+                        <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+                        <span className="text-sm text-foreground font-medium">
+                          {selectedFile ? selectedFile.name : 'Click to upload'}
+                        </span>
+                        <span className="text-xs text-muted-foreground mt-1">PNG, JPG, GIF, PDF (max 5MB)</span>
+                      </label>
+                      {selectedFile && (
+                        <Button
+                          type="button"
+                          onClick={uploadReceipt}
+                          disabled={uploading}
+                          className="mt-3 w-full"
+                          variant="outline"
+                        >
+                          {uploading ? 'Uploading...' : 'Upload Receipt'}
+                        </Button>
+                      )}
+                    </>
+                  ) : (
+                    <div className="flex items-center justify-between py-2">
+                      <div className="flex items-center space-x-2">
+                        <div className="h-8 w-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                          <Upload className="h-4 w-4 text-green-600 dark:text-green-400" />
+                        </div>
+                        <span className="text-sm font-medium">Receipt uploaded</span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setReceiptUrl('');
+                          setSelectedFile(null);
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-2">
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  variant="outline"
+                  className="flex-1"
+                  size="lg"
+                >
+                  {loading ? 'Saving...' : 'Save as Draft'}
+                </Button>
+                
+                <Button
+                  type="button"
+                  onClick={(e) => handleSubmit(e, true)}
+                  disabled={loading}
+                  className="flex-1"
+                  size="lg"
+                >
+                  {loading ? 'Submitting...' : 'Submit for Approval'}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      </main>
     </div>
   );
 }
