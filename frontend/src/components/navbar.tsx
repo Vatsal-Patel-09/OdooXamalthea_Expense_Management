@@ -3,7 +3,6 @@
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { ThemeToggle } from '@/components/theme-toggle';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -97,7 +96,6 @@ export function Navbar() {
               </div>
             </div>
             
-            <ThemeToggle />
             
             <Button
               variant="outline"

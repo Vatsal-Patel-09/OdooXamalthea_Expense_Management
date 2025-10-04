@@ -10,7 +10,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { api } from '@/lib/api';
-import { ThemeToggle } from '@/components/theme-toggle';
 import { Wallet, UserPlus, Loader2 } from 'lucide-react';
 
 interface Country {
@@ -102,10 +101,6 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4 py-8 relative">
-      {/* Theme toggle */}
-      <div className="absolute top-4 right-4 z-10">
-        <ThemeToggle />
-      </div>
 
       {/* Centered Signup Card */}
       <div className="w-full max-w-md">

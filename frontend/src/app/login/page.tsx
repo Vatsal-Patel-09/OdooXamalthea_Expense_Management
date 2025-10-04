@@ -9,7 +9,6 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import Link from 'next/link';
-import { ThemeToggle } from '@/components/theme-toggle';
 import { Wallet, LogIn, Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
@@ -38,10 +37,6 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4 relative">
-      {/* Theme toggle */}
-      <div className="absolute top-4 right-4 z-10">
-        <ThemeToggle />
-      </div>
 
       {/* Centered Login Card */}
       <div className="w-full max-w-md">

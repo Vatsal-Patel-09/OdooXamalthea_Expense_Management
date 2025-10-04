@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ThemeToggle } from '@/components/theme-toggle';
 import { toast } from 'sonner';
 import { ArrowLeft, Upload, X, FileText, DollarSign, Calendar, Tag } from 'lucide-react';
 
@@ -199,7 +198,6 @@ export default function NewExpensePage() {
               <div className="h-6 w-px bg-border" />
               <h1 className="text-xl font-semibold">Create Expense</h1>
             </div>
-            <ThemeToggle />
           </div>
         </div>
       </header>
