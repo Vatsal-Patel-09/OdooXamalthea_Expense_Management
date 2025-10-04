@@ -24,6 +24,8 @@ from routes.countries import countries_bp
 from routes.categories import categories_bp
 from routes.upload import upload_bp
 from routes.expenses import expenses_bp
+from routes.approval_rules import approval_rules_bp
+from routes.approvals import approvals_bp
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -45,6 +47,8 @@ app.register_blueprint(countries_bp, url_prefix='/api')
 app.register_blueprint(categories_bp, url_prefix='/api/categories')
 app.register_blueprint(upload_bp, url_prefix='/api')
 app.register_blueprint(expenses_bp, url_prefix='/api/expenses')
+app.register_blueprint(approval_rules_bp, url_prefix='/api/approval-rules')
+app.register_blueprint(approvals_bp, url_prefix='/api/approvals')
 
 # Basic health check route
 @app.route('/')
