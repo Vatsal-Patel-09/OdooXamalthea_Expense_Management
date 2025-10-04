@@ -26,7 +26,7 @@ export default function LoginPage() {
     try {
       await login(formData.email, formData.password);
       toast.success('Login successful!');
-      router.push('/dashboard');
+      router.push('/expenses'); // Redirect to expenses page instead of dashboard
     } catch (error: any) {
       toast.error(error.message || 'Login failed');
     } finally {

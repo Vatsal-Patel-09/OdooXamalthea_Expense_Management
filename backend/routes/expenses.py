@@ -6,6 +6,7 @@ Handles expense CRUD operations and submission for approval
 from flask import Blueprint, request, jsonify
 from config.database import get_supabase_client
 from utils.auth import token_required, admin_required
+from utils.approval_workflow import trigger_approval_workflow, get_expense_approval_status
 from datetime import datetime
 from decimal import Decimal, ROUND_HALF_UP
 import re
@@ -497,15 +498,30 @@ def submit_expense(current_user, expense_id):
             'submitted_at': datetime.now().isoformat()
         }).eq('id', expense_id).execute()
         
-        # TODO: In Phase 4, trigger approval workflow here
-        # - Find matching approval rule
-        # - Create approval records
-        # - Send notifications to approvers
+        # Trigger approval workflow
+        workflow_result = trigger_approval_workflow(expense_id, company_id)
+        
+        if not workflow_result['success']:
+            # Rollback submission if workflow fails
+            supabase.table('expenses').update({
+                'status': 'draft',
+                'submitted_at': None
+            }).eq('id', expense_id).execute()
+            
+            return jsonify({
+                'success': False,
+                'message': f'Failed to trigger approval workflow: {workflow_result["message"]}'
+            }), 500
+        
+        # Get updated expense with approval status
+        updated_expense = result.data[0]
+        approval_status = get_expense_approval_status(expense_id)
+        updated_expense['approval_status'] = approval_status
         
         return jsonify({
             'success': True,
-            'message': 'Expense submitted for approval',
-            'data': result.data[0]
+            'message': workflow_result['message'],
+            'data': updated_expense
         }), 200
         
     except Exception as e:
