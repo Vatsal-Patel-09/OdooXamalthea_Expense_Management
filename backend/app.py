@@ -7,12 +7,18 @@ from flask import Flask, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
 import os
+from pathlib import Path
 
-# Load environment variables
-load_dotenv()
+# Load environment variables FIRST before importing anything else
+backend_dir = Path(__file__).resolve().parent
+env_path = backend_dir / '.env'
+load_dotenv(dotenv_path=env_path)
 
-# Import database config
+# Import database config AFTER loading env
 from config.database import test_connection
+
+# Import route blueprints
+from routes.auth import auth_bp
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -26,6 +32,9 @@ CORS(app, resources={
         "allow_headers": ["Content-Type", "Authorization"]
     }
 })
+
+# Register blueprints
+app.register_blueprint(auth_bp, url_prefix='/api/auth')
 
 # Basic health check route
 @app.route('/')
