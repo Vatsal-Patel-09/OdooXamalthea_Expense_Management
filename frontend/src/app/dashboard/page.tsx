@@ -58,16 +58,61 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
       <header className="bg-white dark:bg-gray-800 shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Expense Management</h1>
-          <div className="flex items-center space-x-4">
-            <span className="text-sm text-gray-600 dark:text-gray-300">
-              {user?.name} ({user?.role})
-            </span>
-            <Button variant="outline" onClick={handleLogout}>
-              Logout
-            </Button>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex justify-between items-center mb-4">
+            <h1 className="text-2xl font-bold">Expense Management</h1>
+            <div className="flex items-center space-x-4">
+              <span className="text-sm text-gray-600 dark:text-gray-300">
+                {user?.name} ({user?.role})
+              </span>
+              <Button variant="outline" onClick={handleLogout}>
+                Logout
+              </Button>
+            </div>
           </div>
+          
+          {/* Navigation Menu */}
+          <nav className="flex space-x-4 border-t pt-4">
+            <Button
+              variant="ghost"
+              onClick={() => router.push('/dashboard')}
+              className="font-medium"
+            >
+              🏠 Dashboard
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => router.push('/expenses')}
+              className="font-medium"
+            >
+              💰 My Expenses
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => router.push('/expenses/new')}
+              className="font-medium"
+            >
+              ➕ Create Expense
+            </Button>
+            {user?.role === 'admin' && (
+              <Button
+                variant="ghost"
+                onClick={() => router.push('/admin/categories')}
+                className="font-medium"
+              >
+                🏷️ Categories
+              </Button>
+            )}
+            {(user?.role === 'admin' || user?.role === 'manager') && (
+              <Button
+                variant="ghost"
+                onClick={() => router.push('/approvals')}
+                className="font-medium text-blue-600"
+              >
+                ✅ Approvals
+              </Button>
+            )}
+          </nav>
         </div>
       </header>
 
@@ -82,7 +127,7 @@ export default function DashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                 <p className="text-sm text-gray-600 dark:text-gray-300">Total Expenses</p>
                 <p className="text-2xl font-bold">{expenses.length}</p>
@@ -99,6 +144,23 @@ export default function DashboardPage() {
                   {expenses.filter((e) => e.status === 'submitted').length}
                 </p>
               </div>
+            </div>
+            
+            {/* Quick Actions */}
+            <div className="flex gap-3">
+              <Button 
+                onClick={() => router.push('/expenses/new')}
+                className="flex-1"
+              >
+                ➕ Create New Expense
+              </Button>
+              <Button 
+                onClick={() => router.push('/expenses')}
+                variant="outline"
+                className="flex-1"
+              >
+                📋 View All Expenses
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -129,16 +191,32 @@ export default function DashboardPage() {
         {/* Recent Expenses */}
         <Card>
           <CardHeader>
-            <CardTitle>Recent Expenses</CardTitle>
-            <CardDescription>
-              Your latest expense submissions
-            </CardDescription>
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle>Recent Expenses</CardTitle>
+                <CardDescription>
+                  Your latest expense submissions
+                </CardDescription>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => router.push('/expenses')}
+              >
+                View All →
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             {expenses.length === 0 ? (
-              <p className="text-center text-gray-500 py-8">
-                No expenses yet. Create your first expense to get started!
-              </p>
+              <div className="text-center py-8">
+                <p className="text-gray-500 mb-4">
+                  No expenses yet. Create your first expense to get started!
+                </p>
+                <Button onClick={() => router.push('/expenses/new')}>
+                  Create First Expense
+                </Button>
+              </div>
             ) : (
               <div className="space-y-4">
                 {expenses.slice(0, 5).map((expense) => (

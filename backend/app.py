@@ -21,6 +21,9 @@ from config.database import test_connection
 from routes.auth import auth_bp
 from routes.users import users_bp
 from routes.countries import countries_bp
+from routes.categories import categories_bp
+from routes.upload import upload_bp
+from routes.expenses import expenses_bp
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -39,6 +42,9 @@ CORS(app, resources={
 app.register_blueprint(auth_bp, url_prefix='/api/auth')
 app.register_blueprint(users_bp, url_prefix='/api/users')
 app.register_blueprint(countries_bp, url_prefix='/api')
+app.register_blueprint(categories_bp, url_prefix='/api/categories')
+app.register_blueprint(upload_bp, url_prefix='/api')
+app.register_blueprint(expenses_bp, url_prefix='/api/expenses')
 
 # Basic health check route
 @app.route('/')
