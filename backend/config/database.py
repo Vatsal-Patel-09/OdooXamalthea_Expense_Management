@@ -30,7 +30,9 @@ def get_supabase_client() -> Client:
         if not SUPABASE_URL or not SUPABASE_KEY:
             raise ValueError("Supabase URL and KEY must be set in environment variables")
         
-        supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+        # Remove trailing slash from URL if present
+        url = SUPABASE_URL.rstrip('/')
+        supabase = create_client(url, SUPABASE_KEY)
     
     return supabase
 
@@ -43,7 +45,9 @@ def get_supabase_admin_client() -> Client:
     if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
         raise ValueError("Supabase URL and SERVICE_KEY must be set in environment variables")
     
-    return create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+    # Remove trailing slash from URL if present
+    url = SUPABASE_URL.rstrip('/')
+    return create_client(url, SUPABASE_SERVICE_KEY)
 
 def test_connection() -> dict:
     """

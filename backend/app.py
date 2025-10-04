@@ -14,18 +14,36 @@ load_dotenv()
 # Import database config
 from config.database import test_connection
 
+# Import routes
+from routes.auth import auth_bp
+from routes.users import users_bp
+from routes.categories import categories_bp
+from routes.expenses import expenses_bp
+from routes.approvals import approvals_bp
+
 # Initialize Flask app
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key')
 
+# CORS Configuration - Allow frontend
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
+
 # Enable CORS for all routes
 CORS(app, resources={
-    r"/*": {
-        "origins": "*",
+    r"/api/*": {
+        "origins": [FRONTEND_URL, "http://localhost:3000", "http://127.0.0.1:3000"],
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Authorization"]
+        "allow_headers": ["Content-Type", "Authorization"],
+        "supports_credentials": True
     }
 })
+
+# Register blueprints
+app.register_blueprint(auth_bp, url_prefix='/api/auth')
+app.register_blueprint(users_bp, url_prefix='/api/users')
+app.register_blueprint(categories_bp, url_prefix='/api/categories')
+app.register_blueprint(expenses_bp, url_prefix='/api/expenses')
+app.register_blueprint(approvals_bp, url_prefix='/api/approvals')
 
 # Basic health check route
 @app.route('/')
